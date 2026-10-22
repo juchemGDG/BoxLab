@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Boxlab</title>
+  <meta name="theme-color" content="#0f172a">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <!-- Cache-Buster: bei jedem Deploy hochzählen -->
+  <link rel="stylesheet" href="boxlab.css?v=8">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ═══════ SIDEBAR ═══════ -->
+  <aside id="sidebar">
+    <div id="sidebar-header">
+      <span id="sidebar-title">Boxlab</span>
+      <span id="sidebar-subtitle">Lasercut-Box-Designer</span>
+    </div>
+
+    <div id="sidebar-scroll">
+
+      <div id="props-wrap" hidden>
+        <div class="section-label">AUSWAHL</div>
+        <div class="panel" id="props"></div>
+      </div>
+
+      <div class="section-label">BOX</div>
+      <div class="panel">
+        <div class="field-row">
+          <label for="in-lid">Deckel</label>
+          <select id="in-lid" class="wide">
+            <option value="none">ohne (offen)</option>
+            <option value="fixed">fest (verzinkt)</option>
+            <option value="lift">zum Abnehmen</option>
+            <option value="slide">Schiebedeckel</option>
+            <option value="hinge">Klappdeckel</option>
+          </select>
+        </div>
+        <div class="muted small" id="lid-hint"></div>
+        <div class="field-row" id="row-play" hidden>
+          <label for="in-c" title="Luft zwischen beweglichem Deckel und Box. Etwas mehr, wenn der Deckel klemmt.">Spiel Deckel</label>
+          <input type="number" id="in-c" min="0" max="2" step="0.05">
+          <span class="muted">mm</span>
+        </div>
+
+        <div class="field-row">
+          <label for="in-measure">Maße gelten</label>
+          <select id="in-measure">
+            <option value="outer">außen</option>
+            <option value="inner">innen</option>
+          </select>
+        </div>
+        <div class="field-grid">
+          <label>Breite<input type="number" id="in-W" min="1" step="1"></label>
+          <label>Tiefe<input type="number" id="in-D" min="1" step="1"></label>
+          <label>Höhe<input type="number" id="in-H" min="1" step="1"></label>
+        </div>
+        <div class="field-grid">
+          <label title="Dicke des Plattenmaterials">Material<input type="number" id="in-t" min="0.5" step="0.1"></label>
+          <label title="Richtwert; die Zinken werden passend verteilt">Zinken<input type="number" id="in-f" min="2" step="1"></label>
+          <label title="Schnittfuge des Lasers (Kerf). 0 = keine Korrektur">Fuge<input type="number" id="in-k" min="0" max="1" step="0.05"></label>
+        </div>
+        <div class="muted small">Maße in mm</div>
+      </div>
+
+      <div class="section-label">ZWISCHENWÄNDE</div>
+      <div class="panel">
+        <div class="field-grid two">
+          <label title="Wände, die die Breite teilen (stehen von vorn nach hinten)">Teilen die Breite
+            <input type="number" id="cnt-x" min="0" max="12" step="1"></label>
+          <label title="Wände, die die Tiefe teilen (stehen von links nach rechts)">Teilen die Tiefe
+            <input type="number" id="cnt-y" min="0" max="12" step="1"></label>
+        </div>
+        <div class="muted small">Anzahl eintragen = gleichmäßig verteilt. Position danach einzeln änderbar.</div>
+        <div id="div-list"></div>
+        <div class="btn-row">
+          <button type="button" class="btn-side" id="add-x">+ Breite teilen</button>
+          <button type="button" class="btn-side" id="add-y">+ Tiefe teilen</button>
+        </div>
+      </div>
+
+      <div class="section-label">WERKZEUGE</div>
+      <div id="palette"></div>
+
+      <div class="section-label">BAUTEILE</div>
+      <div class="panel" id="tpl-panel">
+        <select id="tpl-select" aria-label="Bauteil-Vorlage"></select>
+        <div id="tpl-card"></div>
+        <div class="muted small">Ausschnitte und Bohrbilder als Richtwerte – vor dem Lasern nachmessen.</div>
+      </div>
+
+      <div class="section-label">3D-MODELL (STL)</div>
+      <div class="panel" id="stl-panel">
+        <div class="btn-row"><button type="button" class="btn-side" id="stl-load" title="Oder die Datei einfach ins Fenster ziehen">STL laden …</button></div>
+        <div class="muted small" id="stl-info"></div>
+        <div id="stl-props" hidden>
+          <div class="btn-row">
+            <button type="button" class="btn-side" data-stl-rot="x" title="90° um die x-Achse (links–rechts)">↻ X</button>
+            <button type="button" class="btn-side" data-stl-rot="y" title="90° um die y-Achse (vorn–hinten)">↻ Y</button>
+            <button type="button" class="btn-side" data-stl-rot="z" title="90° um die senkrechte Achse">↻ Z</button>
+          </div>
+          <div class="field-grid">
+            <label title="Mitte des Modells, gemessen von der linken Außenkante">X Mitte<input type="number" id="stl-x" step="1"></label>
+            <label title="Mitte des Modells, gemessen von der vorderen Außenkante">Y Mitte<input type="number" id="stl-y" step="1"></label>
+            <label title="Abstand über dem Innenboden (0 = liegt auf)">Z Boden<input type="number" id="stl-z" step="1"></label>
+          </div>
+          <div class="btn-row">
+            <button type="button" class="btn-side" id="stl-center">Mittig</button>
+            <button type="button" class="btn-side" id="stl-floor">Auf den Boden</button>
+          </div>
+          <div class="field-row">
+            <label for="stl-gap" title="Luft zwischen Modell und Wänden bzw. Deckel">Abstand zur Box</label>
+            <input type="number" id="stl-gap" min="0" step="0.5">
+            <span class="muted">mm</span>
+          </div>
+          <div class="btn-row"><button type="button" class="btn-side" id="stl-fit" title="Innenraum = Modell + Abstand; Modell mittig auf den Boden">Box ans Modell anpassen</button></div>
+          <label class="check"><input type="checkbox" id="stl-shadow" checked> Schatten auf den Teilen (2D)</label>
+          <div class="muted small">Dunkel = nah an der Wand. Dort Löcher und Ausschnitte setzen, z. B. für Buchsen oder Schraubpunkte.</div>
+        </div>
+        <div class="btn-row" id="stl-remove-row" hidden><button type="button" class="btn-side danger" id="stl-remove">Modell entfernen</button></div>
+      </div>
+
+      <div class="section-label">ANSICHT</div>
+      <div class="panel">
+        <label class="check"><input type="checkbox" id="toggle-snap" checked> Einrasten</label>
+        <div class="field-row">
+          <label for="grid-size">Raster</label>
+          <input type="number" id="grid-size" value="1" min="0.1" max="50" step="0.5">
+          <span class="muted">mm</span>
+        </div>
+        <label class="check"><input type="checkbox" id="toggle-dims" checked> Maße anzeigen</label>
+      </div>
+    </div>
+
+    <button id="btn-help-side" class="btn-help-side">Hilfe &amp; Bedienung</button>
+  </aside>
+  <div id="sidebar-overlay"></div>
+
+  <!-- ═══════ MAIN ═══════ -->
+  <main id="main">
+    <div id="topbar">
+      <button id="sidebar-toggle" title="Seitenleiste">☰</button>
+      <span id="breadcrumb" title="Aktuelle Box">Box</span>
+
+      <nav id="menubar">
+        <button id="btn-undo" class="btn-menu" title="Rückgängig (Strg/⌘+Z)">↶ Zurück</button>
+        <button id="btn-redo" class="btn-menu" title="Wiederholen (Strg/⌘+Y)">↷ Vor</button>
+        <button id="btn-fit"  class="btn-menu" title="Alles einpassen (Taste F)">Einpassen</button>
+        <button id="btn-new"  class="btn-menu">Neu</button>
+        <button id="btn-load" class="btn-menu">Laden</button>
+        <button id="btn-save" class="btn-menu">Speichern</button>
+        <button id="btn-svg"  class="btn-menu btn-accent">SVG export</button>
+        <button id="btn-desktop" class="btn-menu">Desktop-Version</button>
+      </nav>
+      <div id="menu-overlay"></div>
+
+      <div id="view-seg" role="group" aria-label="Ansicht">
+        <button type="button" data-view="2d" title="Nur Zuschnitt (2D)">2D</button>
+        <button type="button" data-view="split" title="Zuschnitt und 3D-Vorschau">2D+3D</button>
+        <button type="button" data-view="3d" title="Nur 3D-Vorschau">3D</button>
+      </div>
+      <button id="btn-delete" class="btn-danger" title="Markiertes Element löschen" disabled>🗑<span id="btn-delete-label"> Löschen</span></button>
+      <button id="menu-toggle" title="Menü">⋮</button>
+
+      <span id="status">Bereit</span>
+    </div>
+
+    <div id="warnings" hidden></div>
+
+    <div id="views" class="mode-2d">
+      <div id="canvas-container">
+        <svg id="sheet" xmlns="http://www.w3.org/2000/svg"></svg>
+        <input type="text" id="dim-edit" autocomplete="off" inputmode="decimal" hidden>
+        <div id="zoom-box">
+          <button id="zoom-in"  title="Vergrößern">+</button>
+          <button id="zoom-out" title="Verkleinern">−</button>
+        </div>
+      </div>
+
+      <div id="view3d">
+        <canvas id="gl"></canvas>
+        <div id="v3-label" hidden></div>
+        <div id="v3-hint">Ziehen: drehen · Shift+Ziehen: verschieben · Rad: zoomen · Doppelklick: zurück</div>
+        <div id="v3-nogl" hidden>Die 3D-Vorschau braucht WebGL – dieser Browser bietet es nicht an.</div>
+        <div id="v3-panel">
+          <label title="Teile auseinanderziehen">Explosion
+            <input type="range" id="v3-explode" min="0" max="1" step="0.01" value="0"></label>
+          <label class="check" id="v3-top-wrap"><input type="checkbox" id="v3-top" checked> Deckel</label>
+          <label class="check" id="v3-stl-wrap" hidden><input type="checkbox" id="v3-stl" checked> Modell</label>
+          <button type="button" id="v3-reset" title="Blickwinkel zurücksetzen (Doppelklick)">Ansicht</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+</div><!-- #app -->
+
+<input type="file" id="file-input" accept=".json,application/json" hidden>
+<input type="file" id="stl-input" accept=".stl,model/stl,application/sla" hidden>
+
+<!-- ═══════ INFO MODAL ═══════ -->
+<div id="modal" class="overlay">
+  <div id="modal-box" class="box">
+    <h2 id="modal-title"></h2>
+    <pre id="modal-body"></pre>
+    <div class="right"><button id="modal-close" class="btn-primary">OK</button></div>
+  </div>
+</div>
+
+<!-- ═══════ EXPORT ═══════ -->
+<div id="export-modal" class="overlay">
+  <div class="box">
+    <h2>SVG für den Lasercutter</h2>
+    <div class="form">
+      <label>Linienfarbe
+        <select id="ex-color">
+          <option value="#ff0000">Rot (Schneiden)</option>
+          <option value="#000000">Schwarz</option>
+          <option value="#0000ff">Blau</option>
+        </select>
+      </label>
+      <label>Linienstärke (mm)
+        <input type="number" id="ex-stroke" value="0.1" min="0.001" step="0.01">
+      </label>
+      <label>Abstand der Teile (mm)
+        <input type="number" id="ex-gap" value="4" min="0" step="1">
+      </label>
+      <label>Max. Breite des Bogens (mm, leer = automatisch)
+        <input type="number" id="ex-width" min="10" step="10" placeholder="automatisch">
+      </label>
+      <label class="check"><input type="checkbox" id="ex-labels"> Teilenamen als Gravur (blau) mitexportieren</label>
+    </div>
+    <p class="note" id="ex-info"></p>
+    <div id="prompt-buttons">
+      <button id="ex-cancel" class="btn-secondary">Abbrechen</button>
+      <button id="ex-ok" class="btn-primary">Exportieren</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ HILFE ═══════ -->
+<div id="help-modal" class="overlay">
+  <div id="help-box" role="dialog" aria-labelledby="help-title">
+    <div id="help-head">
+      <h2 id="help-title">Hilfe &amp; Bedienung</h2>
+      <button id="help-close" title="Schließen (Esc)">✕</button>
+    </div>
+    <div id="help-body">
+      <section>
+        <h3>Box festlegen</h3>
+        <ul>
+          <li>Links Breite, Tiefe und Höhe in mm eintragen. <b>Maße gelten außen/innen</b> legt fest, ob das Außenmaß oder der nutzbare Innenraum gemeint ist.</li>
+          <li><b>Deckel:</b>
+            <i>ohne</i> – Wände oben glatt ·
+            <i>fest</i> – Deckel mit Zinken, wird verklebt ·
+            <i>zum Abnehmen</i> – liegt auf; der kleinere <b>Einsatz</b> wird unter den Deckel geklebt und hält ihn in Position ·
+            <i>Schiebedeckel</i> – läuft in Schlitzen der Seitenwände und lässt sich nach vorn herausziehen ·
+            <i>Klappdeckel</i> – Zapfen am Deckel drehen in runden Löchern der Seitenwände (beim Zusammenbauen den Deckel gleich mit einsetzen).</li>
+          <li><b>Spiel Deckel</b> (nur bei beweglichen Deckeln): Luft zwischen Deckel und Box. Klemmt der Deckel, Spiel erhöhen; wackelt er, verringern. Tipp: ein Langloch als Griffmulde in den Deckel setzen.</li>
+          <li>Bei <b>Maße gelten innen</b> ist die Innenhöhe der freie Raum vom Boden bis unter den Deckel.</li>
+          <li><b>Material</b> ist die Plattendicke (z. B. 3 mm Sperrholz). <b>Zinken</b> ist die gewünschte Zinkenbreite; sie wird auf jeder Kante passend aufgeteilt.</li>
+          <li><b>Fuge</b> gleicht die Schnittfuge des Lasers aus (typisch 0,1–0,2 mm). Zapfen werden dann minimal breiter, Schlitze schmaler gezeichnet. Bei 0 passiert nichts.</li>
+        </ul>
+      </section>
+      <section>
+        <h3>Zwischenwände</h3>
+        <ul>
+          <li>Unter <b>Teilen die Breite</b> die Anzahl eintragen: die Wände stehen von vorn nach hinten und werden gleichmäßig verteilt. <b>Teilen die Tiefe</b> macht dasselbe quer dazu.</li>
+          <li>In der Liste lässt sich jede Position einzeln ändern (Abstand der Wandmitte von links bzw. von vorn). Auch im Bild: Maß am Boden anklicken.</li>
+          <li>Kreuzen sich Zwischenwände, entstehen automatisch Kreuzschlitze.</li>
+        </ul>
+      </section>
+      <section>
+        <h3>Löcher, Rechtecke, Langlöcher, Lochraster</h3>
+        <ul>
+          <li>Eine Werkzeug-Karte in der Seitenleiste auf ein Teil <b>ziehen</b> – oder anklicken und dann auf das Teil klicken.</li>
+          <li><b>Rechteck:</b> mit <b>Eckenradius</b> werden die Ecken rund. <b>Langloch:</b> Enden immer halbrund, z. B. für Griffmulden oder Kabel.</li>
+          <li><b>Lochraster:</b> Lochdurchmesser, Abstand, Spalten und Reihen einstellen; „Reihen versetzt“ ergibt ein Wabenmuster – für Lüftung oder Lautsprecher.</li>
+          <li><b>Verschieben:</b> Element ziehen. Mit eingeschaltetem „Einrasten“ springt es im eingestellten Raster. Pfeiltasten schieben um 1 mm (<kbd>Shift</kbd>: 10 mm). <b>↔ Mitte / ↕ Mitte</b> setzt es mittig aufs Teil.</li>
+          <li><b>Drehen:</b> Griff über dem Element ziehen, im Feld „Winkel“ eintragen oder <kbd>R</kbd> für 90°.</li>
+          <li>Ein markiertes Element zeigt seine <b>Maße</b> (Abstand zum linken/oberen Rand, Ø bzw. Breite/Höhe, Winkel).</li>
+        </ul>
+      </section>
+      <section>
+        <h3>Bauteile</h3>
+        <ul>
+          <li>Unter <b>Bauteile</b> eine Vorlage wählen – Buchsen, Taster, Schalter, Displays, Lüfter oder das Bohrbild einer Platine (Raspberry Pi, Pi Zero, Pico) – und die Karte darunter auf ein Teil ziehen.</li>
+          <li>Die Vorlage bleibt ein Element: verschieben und drehen als Ganzes. Der gestrichelte Umriss zeigt die Größe des Bauteils und wird <b>nicht</b> geschnitten.</li>
+          <li><b>Auf Gegenseite</b> spiegelt die Vorlage, damit die Löcher von beiden Seiten zueinander passen. <b>In Einzelteile auflösen</b> macht daraus einzelne Löcher, die sich frei ändern lassen.</li>
+          <li>Die Maße sind <b>Richtwerte</b>. Bauteile unterscheiden sich je nach Hersteller – vor dem Lasern nachmessen.</li>
+        </ul>
+      </section>
+      <section>
+        <h3>Maße direkt ändern</h3>
+        <ul>
+          <li>Wie in Fusion: auf eine <b>Maßlinie oder ihre Zahl klicken</b>, neuen Wert tippen, <kbd>Enter</kbd>.</li>
+          <li>Die Maße um die Teile (Breite/Höhe) ändern die ganze Box – alle anderen Teile passen sich an.</li>
+          <li>Löcher bleiben beim Ändern der Box an ihrer Position im jeweiligen Teil.</li>
+        </ul>
+      </section>
+      <section>
+        <h3>3D-Modell (STL)</h3>
+        <ul>
+          <li><b>STL laden</b> (oder die Datei ins Fenster ziehen): das Bauteil erscheint grün in der 3D-Vorschau, mittig auf dem Boden der Box. STL-Dateien werden in Millimetern erwartet.</li>
+          <li><b>↻ X / ↻ Y / ↻ Z</b> drehen um 90° – nützlich, wenn das Modell „liegend“ ankommt. <b>X/Y Mitte</b> und <b>Z Boden</b> verschieben es (Z = Abstand über dem Innenboden).</li>
+          <li><b>Box ans Modell anpassen</b> macht den Innenraum so groß wie das Modell plus <b>Abstand</b> rundum (oben auch) – das Modell liegt dann mittig auf dem Boden.</li>
+          <li>Ragt das Modell aus dem Innenraum oder stößt es an eine Zwischenwand, wird es <b>rot</b> und oben erscheint eine Warnung mit den Millimetern.</li>
+          <li><b>Schatten:</b> Im Zuschnitt (2D) wirft das Modell einen grünen Schatten auf jede Wand, den Boden und den Deckel. Je <b>dunkler</b>, desto näher liegt das Modell dort an der Platte – eine Buchse am Platinenrand erscheint z. B. als dunkler Fleck auf der Vorderwand. Genau dort Loch, Langloch oder Bauteil-Vorlage setzen. Unter jedem Teil steht, wie weit das Modell entfernt ist.</li>
+          <li>Die STL selbst wird nicht in die Box-Datei (JSON) gespeichert, nur Name und Lage. Der Browser merkt sich die zuletzt geladene STL; sonst die Datei einfach neu laden.</li>
+        </ul>
+      </section>
+      <section>
+        <h3>3D-Vorschau</h3>
+        <ul>
+          <li>Oben rechts zwischen <b>2D</b>, <b>2D+3D</b> und <b>3D</b> umschalten. Die Vorschau zeigt die zusammengesteckte Box mit allen Löchern und Zwischenwänden.</li>
+          <li><b>Ziehen</b> dreht die Box, <kbd>Shift</kbd>+Ziehen (oder zwei Finger) verschiebt, Mausrad oder Pinch zoomt. <b>Doppelklick</b> stellt den Blickwinkel zurück.</li>
+          <li><b>Explosion</b> zieht die Teile auseinander – so sieht man, wie Zinken und Zwischenwände ineinandergreifen. <b>Deckel</b> blendet den Deckel aus, um hineinzusehen.</li>
+          <li>Ein <b>Klick auf ein Teil</b> markiert es in beiden Ansichten; umgekehrt markiert ein Klick auf ein Teil im Zuschnitt es auch in 3D.</li>
+        </ul>
+      </section>
+      <section>
+        <h3>Ansicht, Speichern, Export</h3>
+        <ul>
+          <li>Zoomen mit Mausrad oder zwei Fingern, verschieben durch Ziehen auf freier Fläche. <kbd>F</kbd> passt alles ein.</li>
+          <li>Rückgängig <kbd>Strg/⌘</kbd>+<kbd>Z</kbd> · Wiederholen <kbd>Strg/⌘</kbd>+<kbd>Y</kbd> · Löschen <kbd>Entf</kbd> · Duplizieren <kbd>Strg/⌘</kbd>+<kbd>D</kbd></li>
+          <li><b>Speichern/Laden</b> als JSON-Datei. Die Arbeit wird außerdem automatisch im Browser gemerkt.</li>
+          <li><b>SVG export:</b> ein Bogen in Millimetern, nur Schnittlinien (ohne Maße). Linienfarbe und -stärke je nach Laser-Software einstellbar.</li>
+        </ul>
+      </section>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ DESKTOP ═══════ -->
+<div id="download-modal" class="overlay">
+  <div id="download-box" class="box">
+    <h2>Boxlab für den Desktop</h2>
+    <p id="download-intro">Die Desktop-Version läuft ohne Browser-Tab und speichert direkt auf dem Rechner. Funktionsumfang identisch zur Web-Version.</p>
+
+    <div id="download-list">
+      <button type="button" class="download-item" id="dl-install">
+        <span class="download-os">Als App installieren</span>
+        <span class="download-meta" id="dl-install-meta">Browser-App (PWA)</span>
+      </button>
+      <button type="button" class="download-item" id="dl-offline">
+        <span class="download-os">Offline-Datei</span>
+        <span class="download-meta">eine .html, läuft ohne Internet</span>
+      </button>
+    </div>
+    <div id="download-version"></div>
+    <div id="download-pkgs"></div>
+    <p id="download-note"></p>
+    <div class="right"><button id="download-close" class="btn-primary">Schließen</button></div>
+  </div>
+</div>
+
+<script src="geometry.js?v=8"></script>
+<script src="features.js?v=8"></script>
+<script src="stl.js?v=8"></script>
+<script src="view3d.js?v=8"></script>
+<script src="boxlab.js?v=8"></script>
+</body>
+</html>

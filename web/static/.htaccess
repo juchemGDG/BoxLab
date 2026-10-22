@@ -1,0 +1,28 @@
+# ─────────────────────────────────────────────────────────────────────
+# Wichtig fuer das Deployment des Boxlab
+#
+# index.html darf NICHT im Browser-Cache liegen bleiben: laedt der Browser
+# eine alte index.html und dazu die neue pap.js, passen HTML und Skript nicht
+# mehr zusammen. Die Seite blieb dadurch frueher komplett leer.
+# boxlab.js, boxlab.css, geometry.js haben einen Cache-Buster (?v=N) und duerfen gecacht werden.
+#
+# Achtung: Diese Datei beginnt mit einem Punkt und wird von vielen FTP-
+# Programmen standardmaessig ausgeblendet – beim Hochladen also "versteckte
+# Dateien anzeigen" aktivieren.
+#
+# Laeuft der Webspace ueber nginx (z. B. Plesk ohne Apache), wirkt .htaccess
+# nicht. Dann in Plesk unter "Apache & nginx Einstellungen" bei den
+# zusaetzlichen nginx-Direktiven eintragen:
+#
+#   location = /index.html { add_header Cache-Control "no-cache, must-revalidate"; }
+#   location = /           { add_header Cache-Control "no-cache, must-revalidate"; }
+# ─────────────────────────────────────────────────────────────────────
+
+<IfModule mod_headers.c>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+</IfModule>
+
+# Korrekte Zeichenkodierung fuer die deutschen Umlaute
+AddDefaultCharset UTF-8
