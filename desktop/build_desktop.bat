@@ -5,5 +5,5 @@ python -m venv .build-venv
 call .build-venv\Scripts\activate.bat
 pip install --upgrade pip
 pip install -r desktop\requirements.txt pyinstaller
-pyinstaller desktop\boxlab_desktop.py --name Boxlab --windowed --noconfirm --add-data "web\static;static" --distpath build\dist --workpath build\work --specpath build
+pyinstaller desktop\boxlab_desktop.py --name Boxlab --windowed --noconfirm --add-data "web\static;static" --distpath build\dist --workpath build\work
 echo Fertig: build\dist\Boxlab\Boxlab.exe  (Ordner zippen oder mit Inno Setup einen Installer bauen)

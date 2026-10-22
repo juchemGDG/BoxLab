@@ -18,7 +18,7 @@ if [[ "$(uname)" == "Darwin" ]]; then ICON=(--icon icon-1024.png); fi
 
 pyinstaller desktop/boxlab_desktop.py --name Boxlab --windowed --noconfirm \
   --add-data "web/static${SEP}static" "${ICON[@]}" \
-  --distpath build/dist --workpath build/work --specpath build
+  --distpath build/dist --workpath build/work
 
 mkdir -p web/static/downloads
 if [[ "$(uname)" == "Darwin" ]]; then
