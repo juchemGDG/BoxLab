@@ -33,7 +33,7 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Abhängigkeiten (Linux: Qt-Bibliotheken)
+      - name: Abhängigkeiten (Linux, mit Qt-Bibliotheken)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
