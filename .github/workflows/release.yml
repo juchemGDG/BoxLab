@@ -1,0 +1,86 @@
+# Baut die Desktop-Apps (macOS, Windows, Linux) und hängt sie an einen GitHub-Release.
+# Start: Tag pushen (git tag v1.0.0 && git push origin v1.0.0) oder unter "Actions" von Hand starten.
+name: Desktop-Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag für den Release (z. B. v1.0.0)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            artifact: Boxlab.dmg
+          - os: windows-latest
+            artifact: Boxlab-windows.zip
+          - os: ubuntu-latest
+            artifact: Boxlab-linux-x86_64.tar.gz
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Abhängigkeiten (Linux: Qt-Bibliotheken)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 \
+            libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 libxcb-xkb1 libdbus-1-3
+          pip install "pywebview[qt]" pyinstaller pillow
+
+      - name: Abhängigkeiten
+        if: runner.os != 'Linux'
+        run: pip install -r desktop/requirements.txt pyinstaller pillow
+
+      - name: App bauen
+        shell: bash
+        run: |
+          SEP=":"; if [[ "$RUNNER_OS" == "Windows" ]]; then SEP=";"; fi
+          ICON=""; if [[ "$RUNNER_OS" != "Linux" ]]; then ICON="--icon icon-1024.png"; fi
+          pyinstaller desktop/boxlab_desktop.py --name Boxlab --windowed --noconfirm \
+            --add-data "web/static${SEP}static" $ICON \
+            --distpath build/dist --workpath build/work --specpath build
+          mkdir -p out
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            hdiutil create -volname Boxlab -srcfolder build/dist/Boxlab.app -ov -format UDZO out/Boxlab.dmg
+          elif [[ "$RUNNER_OS" == "Windows" ]]; then
+            powershell -Command "Compress-Archive -Path build/dist/Boxlab -DestinationPath out/Boxlab-windows.zip"
+          else
+            tar -C build/dist -czf out/Boxlab-linux-x86_64.tar.gz Boxlab
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: out/${{ matrix.artifact }}
+
+  release:
+    needs: build
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Release veröffentlichen
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          ls -l dist
+          gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --title "Boxlab $TAG" --generate-notes \
+            || gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber

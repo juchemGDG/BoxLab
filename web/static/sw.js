@@ -1,5 +1,5 @@
 /* Boxlab Service Worker: Netzwerk zuerst, bei Offline aus dem Cache. */
-const CACHE = 'boxlab-v8';
+const CACHE = 'boxlab-v9';
 const FILES = ['./', 'index.html', 'boxlab.css', 'geometry.js', 'features.js', 'stl.js', 'view3d.js', 'boxlab.js', 'favicon.svg', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', (e) => {

@@ -45,7 +45,7 @@ python3 desktop/boxlab_desktop.py     # eigenes Fenster (ohne pywebview: Browser
 desktop\build_desktop.bat             # Windows
 ```
 
-Fertige Pakete landen in `web/static/downloads/` (`Boxlab.dmg`, `Boxlab-Setup.exe`,
+Fertige Pakete landen in `web/static/downloads/` (`Boxlab.dmg`, `Boxlab-windows.zip`,
 `Boxlab-linux-x86_64.tar.gz`) und erscheinen dann im Dialog „Desktop-Version“.
 Alternativ `GITHUB_REPO` oben im Desktop-Abschnitt von `boxlab.js` setzen.
 

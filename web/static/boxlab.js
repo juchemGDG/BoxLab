@@ -1197,10 +1197,10 @@ function showModal(title, msg) {
 const closeMenu = () => { byId('menubar').classList.remove('open'); };
 
 // Desktop: Pakete (optional, wie beim PAP-Editor) + PWA + Offline-Datei
-const GITHUB_REPO = '';          // z. B. 'benutzer/Boxlab' – leer = nur lokale Dateien in downloads/
+const GITHUB_REPO = 'juchemGDG/BoxLab';   // Pakete aus dem neuesten GitHub-Release; leer = nur lokale Dateien in downloads/
 const DOWNLOADS = [
-  { os: 'macOS',   file: 'Boxlab.dmg',                 hint: 'Apple Silicon & Intel · .dmg' },
-  { os: 'Windows', file: 'Boxlab-Setup.exe',           hint: 'Installer · .exe' },
+  { os: 'macOS',   file: 'Boxlab.dmg',                 hint: 'Apple Silicon (M1 und neuer) · .dmg' },
+  { os: 'Windows', file: 'Boxlab-windows.zip',         hint: 'entpacken, Boxlab.exe starten · .zip' },
   { os: 'Linux',   file: 'Boxlab-linux-x86_64.tar.gz', hint: 'entpacken & starten · .tar.gz' },
 ];
 let installEvent = null;
